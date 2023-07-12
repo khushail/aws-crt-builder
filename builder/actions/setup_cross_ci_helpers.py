@@ -5,6 +5,7 @@ Helper functions for setting up CI that is not necessarily environment variable 
 from builder.actions.install import InstallPackages
 import re
 import os
+from builder.core.host import current_host
 
 ################################################################################
 # Windows Certificate Store
@@ -86,6 +87,12 @@ def create_pkcs11_environment(env, pkcs8key, pkcs8cert, ca_file):
         print("WARNING: SoftHSM2 installation is too old. PKCS#11 tests are disabled")
         return
 
+    _setenv(env, 'AWS_TEST_PKCS11_LIB', softhsm_lib)
+    # bail out if current host is Alpine. Softhsm library crashes on Alpine if we don't use
+    # AWS_PKCS11_LIB_STRICT_INITIALIZE_FINALIZE. Supporting AWS_PKCS11_LIB_STRICT_INITIALIZE_FINALIZE on Node-js is
+    # not trivial due to non-deterministic cleanup.
+    if current_host() == "alpine":
+        return
     # create a token
     _exec_softhsm2_util(
         env,
@@ -115,7 +122,6 @@ def create_pkcs11_environment(env, pkcs8key, pkcs8cert, ca_file):
     _exec_softhsm2_util(env, '--show-slots', '--pin', '0000')
 
     # set env vars for tests
-    _setenv(env, 'AWS_TEST_PKCS11_LIB', softhsm_lib)
     _setenv(env, 'AWS_TEST_PKCS11_TOKEN_LABEL', 'my-test-token')
     _setenv(env, 'AWS_TEST_PKCS11_PIN', '0000')
     _setenv(env, 'AWS_TEST_PKCS11_PKEY_LABEL', 'my-test-key')
