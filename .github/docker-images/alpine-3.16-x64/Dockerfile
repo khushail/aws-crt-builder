@@ -19,7 +19,7 @@ RUN apk add \
     cmake \
     bash \
     aws-cli \
-    node \
+    nodejs \
     npm
 
 WORKDIR /tmp
