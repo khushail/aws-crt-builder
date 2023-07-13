@@ -18,7 +18,9 @@ RUN apk add \
     ca-certificates \
     cmake \
     bash \
-    aws-cli
+    aws-cli \
+    node \
+    npm
 
 WORKDIR /tmp
 
